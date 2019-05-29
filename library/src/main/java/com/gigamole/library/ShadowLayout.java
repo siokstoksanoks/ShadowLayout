@@ -90,26 +90,10 @@ public class ShadowLayout extends FrameLayout {
         final TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ShadowLayout);
         try {
             setIsShadowed(typedArray.getBoolean(R.styleable.ShadowLayout_sl_shadowed, true));
-            setShadowRadius(
-                    typedArray.getDimension(
-                            R.styleable.ShadowLayout_sl_shadow_radius, DEFAULT_SHADOW_RADIUS
-                    )
-            );
-            setShadowDistance(
-                    typedArray.getDimension(
-                            R.styleable.ShadowLayout_sl_shadow_distance, DEFAULT_SHADOW_DISTANCE
-                    )
-            );
-            setShadowAngle(
-                    typedArray.getInteger(
-                            R.styleable.ShadowLayout_sl_shadow_angle, (int) DEFAULT_SHADOW_ANGLE
-                    )
-            );
-            setShadowColor(
-                    typedArray.getColor(
-                            R.styleable.ShadowLayout_sl_shadow_color, DEFAULT_SHADOW_COLOR
-                    )
-            );
+            setShadowRadius(typedArray.getDimension(R.styleable.ShadowLayout_sl_shadow_radius, DEFAULT_SHADOW_RADIUS));
+            setShadowDistance(typedArray.getDimension(R.styleable.ShadowLayout_sl_shadow_distance, DEFAULT_SHADOW_DISTANCE));
+            setShadowAngle(typedArray.getInteger(R.styleable.ShadowLayout_sl_shadow_angle, (int) DEFAULT_SHADOW_ANGLE));
+            setShadowColor(typedArray.getColor(R.styleable.ShadowLayout_sl_shadow_color, DEFAULT_SHADOW_COLOR));
         } finally {
             typedArray.recycle();
         }
@@ -199,20 +183,10 @@ public class ShadowLayout extends FrameLayout {
 
     private int adjustShadowAlpha(final boolean adjust) {
         return Color.argb(
-                adjust ? MAX_ALPHA : mShadowAlpha,
-                Color.red(mShadowColor),
-                Color.green(mShadowColor),
-                Color.blue(mShadowColor)
-        );
-    }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-
-        // Set ShadowLayout bounds
-        mBounds.set(
-                0, 0, MeasureSpec.getSize(widthMeasureSpec), MeasureSpec.getSize(heightMeasureSpec)
+            adjust ? MAX_ALPHA : mShadowAlpha,
+            Color.red(mShadowColor),
+            Color.green(mShadowColor),
+            Color.blue(mShadowColor)
         );
     }
 
@@ -230,34 +204,35 @@ public class ShadowLayout extends FrameLayout {
             // If need to redraw shadow
             if (mInvalidateShadow) {
                 // If bounds is zero
-                if (mBounds.width() != 0 && mBounds.height() != 0) {
-                    // Reset bitmap to bounds
-                    mBitmap = Bitmap.createBitmap(
-                            mBounds.width(), mBounds.height(), Bitmap.Config.ARGB_8888
-                    );
-                    // Canvas reset
-                    mCanvas.setBitmap(mBitmap);
+                if (getWidth() != 0 && getHeight() != 0) {
+                    if (mBitmap == null || mBitmap.isRecycled()) {
+                        // Reset bitmap to bounds
+                        mBitmap = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+                        // Canvas reset
+                        mCanvas.setBitmap(mBitmap);
 
-                    // We just redraw
-                    mInvalidateShadow = false;
-                    // Main feature of this lib. We create the local copy of all content, so now
-                    // we can draw bitmap as a bottom layer of natural canvas.
-                    // We draw shadow like blur effect on bitmap, cause of setShadowLayer() method of
-                    // paint does`t draw shadow, it draw another copy of bitmap
-                    super.dispatchDraw(mCanvas);
+                        // We just redraw
+                        mInvalidateShadow = false;
+                        // Main feature of this lib. We create the local copy of all content, so now
+                        // we can draw bitmap as a bottom layer of natural canvas.
+                        // We draw shadow like blur effect on bitmap, cause of setShadowLayer() method of
+                        // paint does`t draw shadow, it draw another copy of bitmap
+                        super.dispatchDraw(mCanvas);
 
-                    // Get the alpha bounds of bitmap
-                    final Bitmap extractedAlpha = mBitmap.extractAlpha();
-                    // Clear past content content to draw shadow
-                    mCanvas.drawColor(0, PorterDuff.Mode.CLEAR);
+                        // Get the alpha bounds of bitmap
+                        final Bitmap extractedAlpha = mBitmap.extractAlpha();
+                        // Clear past content content to draw shadow
+                        mCanvas.drawColor(0, PorterDuff.Mode.CLEAR);
 
-                    // Draw extracted alpha bounds of our local canvas
-                    mPaint.setColor(adjustShadowAlpha(false));
-                    mCanvas.drawBitmap(extractedAlpha, mShadowDx, mShadowDy, mPaint);
+                        // Draw extracted alpha bounds of our local canvas
+                        mPaint.setColor(adjustShadowAlpha(false));
+                        mCanvas.drawBitmap(extractedAlpha, mShadowDx, mShadowDy, mPaint);
 
-                    // Recycle and clear extracted alpha
-                    extractedAlpha.recycle();
-                } else {
+                        // Recycle and clear extracted alpha
+                        extractedAlpha.recycle();
+                    }
+                }
+                else {
                     // Create placeholder bitmap when size is zero and wait until new size coming up
                     mBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.RGB_565);
                 }
